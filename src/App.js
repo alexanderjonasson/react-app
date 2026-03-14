@@ -5,7 +5,7 @@ function App() {
   const [units, setUnits] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/units")
+    fetch("https://warhammer-api-a4bw.onrender.com/api/units")
       .then((res) => res.json())
       .then((data) => setUnits(data))
       .catch((err) => console.error(err));
@@ -15,10 +15,9 @@ function App() {
     <div className="App">
       <h1>Warhammer 40K Units</h1>
 
-      {units.length === 0 ? (
+      {units.length === 0 ?
         <p>No units found...</p>
-      ) : (
-        <ul>
+      : <ul>
           {units.map((unit) => (
             <li key={unit._id}>
               <strong>{unit.name}</strong>
@@ -30,7 +29,7 @@ function App() {
             </li>
           ))}
         </ul>
-      )}
+      }
     </div>
   );
 }
