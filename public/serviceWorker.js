@@ -30,13 +30,11 @@ self.addEventListener("fetch", (event) => {
 
   if (request.method !== "GET") return;
 
-  // HTML/navigation: network first
   if (request.mode === "navigate") {
     event.respondWith(networkFirstPage(request));
     return;
   }
 
-  // API från Render
   if (
     url.origin === "https://warhammer-api-a4bw.onrender.com" &&
     url.pathname.startsWith("/api/")
@@ -45,7 +43,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // statiska filer: cache first
   event.respondWith(cacheFirstStatic(request));
 });
 
