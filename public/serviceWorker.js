@@ -90,10 +90,13 @@ async function networkFirstApi(request) {
     const cached = await cache.match(request);
     if (cached) return cached;
 
-    return new Response(JSON.stringify([]), {
-      headers: { "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ error: "API unavailable offline and not cached yet" }),
+      {
+        headers: { "Content-Type": "application/json" },
+        status: 503,
+      },
+    );
   }
 }
 
