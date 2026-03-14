@@ -1,4 +1,4 @@
-const CACHE_NAME = "warhammer-pwa-v5";
+const CACHE_NAME = "warhammer-pwa-v6";
 
 const APP_SHELL = [
   "/",
@@ -46,20 +46,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-  const url = new URL(request.url);
 
   if (request.method !== "GET") return;
 
   if (request.mode === "navigate") {
     event.respondWith(networkFirstPage(request));
-    return;
-  }
-
-  if (
-    url.origin === "https://warhammer-api-a4bw.onrender.com" &&
-    url.pathname.startsWith("/api/")
-  ) {
-    event.respondWith(networkFirstApi(request));
     return;
   }
 
@@ -76,27 +67,6 @@ async function networkFirstPage(request) {
   } catch {
     const cached = await cache.match(request);
     return cached || cache.match("/offline.html");
-  }
-}
-
-async function networkFirstApi(request) {
-  const cache = await caches.open(CACHE_NAME);
-
-  try {
-    const response = await fetch(request);
-    cache.put(request, response.clone());
-    return response;
-  } catch {
-    const cached = await cache.match(request);
-    if (cached) return cached;
-
-    return new Response(
-      JSON.stringify({ error: "API unavailable offline and not cached yet" }),
-      {
-        headers: { "Content-Type": "application/json" },
-        status: 503,
-      },
-    );
   }
 }
 

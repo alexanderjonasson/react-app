@@ -7,12 +7,7 @@ function App() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-
-    fetch("https://warhammer-api-a4bw.onrender.com/api/units", {
-      signal: controller.signal,
-    })
+    fetch("https://warhammer-api-a4bw.onrender.com/api/units")
       .then(async (res) => {
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
@@ -26,24 +21,11 @@ function App() {
       })
       .catch((err) => {
         console.error(err);
-
-        if (err.name === "AbortError") {
-          setError(
-            "API:t tog för lång tid att svara. Första laddningen på Render kan vara långsam.",
-          );
-        } else {
-          setError("Kunde inte ladda units. Kontrollera nätet eller cache.");
-        }
+        setError("Kunde inte ladda units.");
       })
       .finally(() => {
-        clearTimeout(timeout);
         setLoading(false);
       });
-
-    return () => {
-      clearTimeout(timeout);
-      controller.abort();
-    };
   }, []);
 
   return (
