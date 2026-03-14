@@ -57,16 +57,18 @@ function App() {
       {!loading && !error && units.length === 0 && <p>No units found...</p>}
 
       {!loading && !error && units.length > 0 && (
-        <div className="units-grid">
+        <ul>
           {units.map((unit) => (
-            <div className="unit-card" key={unit._id}>
-              <h2>{unit.name}</h2>
-              <p>{unit.faction}</p>
-              <p>{unit.role}</p>
-              <p>{unit.points} pts</p>
-            </div>
+            <li key={unit._id}>
+              <strong>{unit.name}</strong>
+              <div>{unit.faction}</div>
+              <div>{unit.role}</div>
+              <div>
+                <span>{unit.points} pts</span>
+              </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
