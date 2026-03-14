@@ -1,29 +1,10 @@
-const CACHE_NAME = "warhammer-pwa-v6";
-
-const APP_SHELL = [
-  "/",
-  "/index.html",
-  "/manifest.json",
-  "/offline.html",
-  "/favicon.ico",
-  "/logo192.png",
-  "/logo512.png",
-];
+const CACHE_NAME = "warhammer-pwa-v4";
+const APP_SHELL = ["/", "/index.html", "/manifest.json", "/offline.html"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      for (const url of APP_SHELL) {
-        try {
-          const response = await fetch(url, { cache: "no-store" });
-          await cache.put(url, response.clone());
-        } catch (error) {
-          console.warn("Failed to cache during install:", url, error);
-        }
-      }
-    }),
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
   );
-
   self.skipWaiting();
 });
 
@@ -40,7 +21,6 @@ self.addEventListener("activate", (event) => {
       ),
     ),
   );
-
   self.clients.claim();
 });
 
@@ -50,41 +30,31 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   if (request.mode === "navigate") {
-    event.respondWith(networkFirstPage(request));
+    event.respondWith(navigateHandler(request));
     return;
   }
 
-  event.respondWith(cacheFirstStatic(request));
+  event.respondWith(cacheFirst(request));
 });
 
-async function networkFirstPage(request) {
-  const cache = await caches.open(CACHE_NAME);
-
+async function navigateHandler(request) {
   try {
-    const response = await fetch(request);
-    cache.put(request, response.clone());
-    return response;
+    const res = await fetch(request);
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, res.clone());
+    return res;
   } catch {
-    const cached = await cache.match(request);
-    return cached || cache.match("/offline.html");
+    const cached = await caches.match(request);
+    return cached || caches.match("/offline.html");
   }
 }
 
-async function cacheFirstStatic(request) {
-  const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
-
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
   if (cached) return cached;
 
-  try {
-    const response = await fetch(request);
-    cache.put(request, response.clone());
-    return response;
-  } catch {
-    if (request.destination === "document") {
-      return cache.match("/offline.html");
-    }
-
-    return new Response("", { status: 504, statusText: "Offline" });
-  }
+  const res = await fetch(request);
+  const cache = await caches.open(CACHE_NAME);
+  cache.put(request, res.clone());
+  return res;
 }
