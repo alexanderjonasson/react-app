@@ -1,4 +1,4 @@
-const CACHE_NAME = "warhammer-pwa-v3";
+const CACHE_NAME = "warhammer-pwa-v4";
 const APP_SHELL = ["/", "/index.html", "/manifest.json", "/offline.html"];
 
 self.addEventListener("install", (event) => {
@@ -10,68 +10,61 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.map((key) => (key === CACHE_NAME ? null : caches.delete(key))),
-        ),
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+          return null;
+        }),
       ),
+    ),
   );
   self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
+  const url = new URL(request.url);
+
+  if (request.method !== "GET") return;
 
   if (request.mode === "navigate") {
-    event.respondWith(navigateHandler(request));
+    event.respondWith(networkFirstPage(request));
     return;
   }
 
-  const url = new URL(request.url);
   if (
-    url.origin === "http://localhost:5000" &&
+    url.origin === "https://warhammer-api-a4bw.onrender.com" &&
     url.pathname.startsWith("/api/")
   ) {
-    event.respondWith(networkFirst(request));
+    event.respondWith(networkFirstApi(request));
     return;
   }
 
-  if (request.method === "GET") {
-    event.respondWith(cacheFirst(request));
-  }
+  event.respondWith(cacheFirstStatic(request));
 });
 
-async function navigateHandler(request) {
+async function networkFirstPage(request) {
   try {
-    const res = await fetch(request);
+    const response = await fetch(request);
     const cache = await caches.open(CACHE_NAME);
-    cache.put(request, res.clone());
-    return res;
+    cache.put(request, response.clone());
+    return response;
   } catch {
     const cached = await caches.match(request);
     return cached || caches.match("/offline.html");
   }
 }
 
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
-
-  const res = await fetch(request);
-  const cache = await caches.open(CACHE_NAME);
-  cache.put(request, res.clone());
-  return res;
-}
-
-async function networkFirst(request) {
+async function networkFirstApi(request) {
   const cache = await caches.open(CACHE_NAME);
 
   try {
-    const res = await fetch(request);
-    cache.put(request, res.clone());
-    return res;
+    const response = await fetch(request);
+    cache.put(request, response.clone());
+    return response;
   } catch {
     const cached = await cache.match(request);
     if (cached) return cached;
@@ -81,4 +74,14 @@ async function networkFirst(request) {
       status: 200,
     });
   }
+}
+
+async function cacheFirstStatic(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request);
+  const cache = await caches.open(CACHE_NAME);
+  cache.put(request, response.clone());
+  return response;
 }
