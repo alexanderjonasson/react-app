@@ -1,5 +1,14 @@
-const CACHE_NAME = "warhammer-pwa-v4";
-const APP_SHELL = ["/", "/index.html", "/manifest.json", "/offline.html"];
+const CACHE_NAME = "warhammer-pwa-v5";
+
+const APP_SHELL = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/offline.html",
+  "/logo192.png",
+  "/logo512.png",
+  "/favicon.ico",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -16,7 +25,6 @@ self.addEventListener("activate", (event) => {
           if (key !== CACHE_NAME) {
             return caches.delete(key);
           }
-          return null;
         }),
       ),
     ),
@@ -30,19 +38,19 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   if (request.mode === "navigate") {
-    event.respondWith(navigateHandler(request));
+    event.respondWith(handleNavigate(request));
     return;
   }
 
   event.respondWith(cacheFirst(request));
 });
 
-async function navigateHandler(request) {
+async function handleNavigate(request) {
   try {
-    const res = await fetch(request);
+    const response = await fetch(request);
     const cache = await caches.open(CACHE_NAME);
-    cache.put(request, res.clone());
-    return res;
+    cache.put(request, response.clone());
+    return response;
   } catch {
     const cached = await caches.match(request);
     return cached || caches.match("/offline.html");
@@ -53,8 +61,8 @@ async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
 
-  const res = await fetch(request);
+  const response = await fetch(request);
   const cache = await caches.open(CACHE_NAME);
-  cache.put(request, res.clone());
-  return res;
+  cache.put(request, response.clone());
+  return response;
 }
